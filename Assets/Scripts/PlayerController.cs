@@ -10,12 +10,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float movementSpeed = 10.0f;
     [SerializeField] private float jumpForce = 16.0f;
     [SerializeField] private float groundCheckRadious;
+    [SerializeField] private float wallCheckDistance;
+    [SerializeField] private float wallSlideSpeed;
     [SerializeField] private int amountOfJumps;
 
     private int amountOfJumpsLeft;
 
     private bool isFacingRight = true;
     private bool isWalking;
+    private bool isTouchingWall;
+    private bool isWallSliding;
     private bool isGrounded;
     private bool canJump;
 
@@ -23,6 +27,8 @@ public class PlayerController : MonoBehaviour
     private Animator anim;
 
     [SerializeField] private Transform groundCheck;
+    [SerializeField] private Transform wallCheck;
+
     [SerializeField] private LayerMask whatIsGrounded;
 
     private void Awake()
@@ -38,12 +44,25 @@ public class PlayerController : MonoBehaviour
         CheckMovementDirection();
         UpdateAnimations();
         CheckIfCanJump();
+        CheckIfWallSliding();
     }
 
     private void FixedUpdate()
     {
         ApplyMovemnet();
         CheckSurroundings();
+    }
+
+    private void CheckIfWallSliding()
+    {
+        if (isTouchingWall && !isGrounded && rb.velocity.y < 0)
+        {
+            isWallSliding = true;
+        }
+        else
+        {
+            isWallSliding = false;
+        }
     }
 
     private void CheckIfCanJump()
@@ -60,6 +79,8 @@ public class PlayerController : MonoBehaviour
     private void CheckSurroundings()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadious, whatIsGrounded);
+
+        isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right, wallCheckDistance, whatIsGrounded);
     }
 
     private void CheckMovementDirection()
@@ -80,6 +101,7 @@ public class PlayerController : MonoBehaviour
         anim.SetBool("isWalking", isWalking);
         anim.SetBool("isGrounded", isGrounded);
         anim.SetFloat("yVelocity", rb.velocity.y);
+        anim.SetBool("isWallSliding", isWallSliding);
     }
 
     private void CheckInput()
@@ -95,6 +117,14 @@ public class PlayerController : MonoBehaviour
     private void ApplyMovemnet()
     {
         rb.velocity = new Vector2(movementSpeed * movementInputDirection, rb.velocity.y);
+
+        if (isWallSliding)
+        {
+            if (rb.velocity.y < -wallSlideSpeed)
+            {
+                rb.velocity = new Vector2(rb.velocity.x, -wallSlideSpeed);
+            }
+        }
     }
     
     private void Jump()
@@ -115,5 +145,7 @@ public class PlayerController : MonoBehaviour
     private void OnDrawGizmos()
     {
         Gizmos.DrawSphere(groundCheck.position, groundCheckRadious);
+
+        Gizmos.DrawLine(wallCheck.position, new Vector3(wallCheck.position.x + wallCheckDistance, wallCheck.position.y, wallCheck.position.z));
     }
 }
