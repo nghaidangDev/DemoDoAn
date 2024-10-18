@@ -12,6 +12,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float groundCheckRadious;
     [SerializeField] private float wallCheckDistance;
     [SerializeField] private float wallSlideSpeed;
+    [SerializeField] private float movementForceInAir;
+    [SerializeField] private float airDragMutiplier = 0.95f;
+    [SerializeField] private float variableJumpHeigtMutiplier = 0.5f;
     [SerializeField] private int amountOfJumps;
 
     private int amountOfJumpsLeft;
@@ -90,7 +93,7 @@ public class PlayerController : MonoBehaviour
         else if (!isFacingRight && movementInputDirection > 0)
             Flip();
 
-        if (rb.velocity.x != 0)
+        if (Mathf.Abs(rb.velocity.x) > 0.01f)
             isWalking = true;
         else 
             isWalking = false;
@@ -112,11 +115,33 @@ public class PlayerController : MonoBehaviour
         {
             Jump();
         }
+
+        if (Input.GetButtonUp("Jump"))
+        {
+            rb.velocity = new Vector2(rb.velocity.x, rb.velocity.y * variableJumpHeigtMutiplier);
+        }
     }
 
     private void ApplyMovemnet()
     {
-        rb.velocity = new Vector2(movementSpeed * movementInputDirection, rb.velocity.y);
+        if (isGrounded)
+        {
+            rb.velocity = new Vector2(movementSpeed * movementInputDirection, rb.velocity.y);
+        }
+        else if (!isGrounded && !isWallSliding && movementInputDirection != 0)
+        {
+            Vector2 forceToAdd = new Vector2(movementForceInAir * movementInputDirection, 0);
+            rb.AddForce(forceToAdd);
+
+            if (Mathf.Abs(rb.velocity.x) > movementSpeed)
+            {
+                rb.velocity = new Vector2(movementSpeed * movementInputDirection, rb.velocity.y);
+            }
+        }else if (!isGrounded && !isWallSliding && movementInputDirection == 0)
+        {
+            rb.velocity = new Vector2(rb.velocity.x * airDragMutiplier, rb.velocity.y);
+        }
+
 
         if (isWallSliding)
         {
@@ -138,8 +163,11 @@ public class PlayerController : MonoBehaviour
 
     private void Flip()
     {
-        isFacingRight = !isFacingRight;
-        transform.Rotate(0.0f, 180.0f, 0.0f);
+        if (!isWallSliding)
+        {
+            isFacingRight = !isFacingRight;
+            transform.Rotate(0.0f, 180.0f, 0.0f);
+        }
     }
 
     private void OnDrawGizmos()
