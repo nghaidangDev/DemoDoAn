@@ -10256,7 +10256,16 @@ MonoBehaviour:
   groundCheckRadious: 0.3
   wallCheckDistance: 0.4
   wallSlideSpeed: 2
+  movementForceInAir: 50
+  airDragMutiplier: 0.95
+  variableJumpHeigtMutiplier: 0.5
+  wallHopForce: 5
+  wallJumpForce: 10
+  jumpTimerSet: 0.15
+  turnTimerSet: 0.1
   amountOfJumps: 1
+  wallHopDirection: {x: 1, y: 0.5}
+  wallJumpDirection: {x: 1, y: 2}
   groundCheck: {fileID: 1652184871}
   wallCheck: {fileID: 1814964658}
   whatIsGrounded:
