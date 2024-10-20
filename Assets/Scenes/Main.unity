@@ -10265,9 +10265,9 @@ MonoBehaviour:
   jumpTimerSet: 0.15
   turnTimerSet: 0.1
   wallJumpTimerSet: 0.5
-  ledgeClimbXOffset1: -0.1
-  ledgeClimbYOffset1: -0.5
-  ledgeClimbXOffset2: 0.8
+  ledgeClimbXOffset1: 0.3
+  ledgeClimbYOffset1: 0.5
+  ledgeClimbXOffset2: 1
   ledgeClimbYOffset2: 2
   amountOfJumps: 1
   wallHopDirection: {x: 1, y: 0.5}
