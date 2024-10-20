@@ -26,6 +26,11 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float turnTimerSet = 0.1f;
     [SerializeField] private float wallJumpTimerSet = 0.5f;
 
+    [SerializeField] private float ledgeClimbXOffset1 = 0f;
+    [SerializeField] private float ledgeClimbYOffset1 = 0f;
+    [SerializeField] private float ledgeClimbXOffset2 = 0f;
+    [SerializeField] private float ledgeClimbYOffset2 = 0f;
+
     [SerializeField] private int amountOfJumps;
 
     private int amountOfJumpsLeft;
@@ -44,15 +49,23 @@ public class PlayerController : MonoBehaviour
     private bool canMove;
     private bool canFlip;
     private bool hasWallJumped;
+    private bool isTouchingLedge;
+    private bool canClimbLedge = false;
+    private bool ledgeDetected;
 
     private Rigidbody2D rb;
     private Animator anim;
+
+    private Vector2 ledgePosBot;
+    private Vector2 ledgePos1;
+    private Vector2 ledgePos2;
 
     [SerializeField] Vector2 wallHopDirection;
     [SerializeField] Vector2 wallJumpDirection;
 
     [SerializeField] private Transform groundCheck;
     [SerializeField] private Transform wallCheck;
+    [SerializeField] private Transform ledgeCheck;
 
     [SerializeField] private LayerMask whatIsGrounded;
 
@@ -71,6 +84,7 @@ public class PlayerController : MonoBehaviour
         CheckIfCanJump();
         CheckIfWallSliding();
         CheckJump();
+        CheckLedgeClimb();
     }
 
     private void FixedUpdate()
@@ -79,9 +93,38 @@ public class PlayerController : MonoBehaviour
         CheckSurroundings();
     }
 
+    private void CheckLedgeClimb()
+    {
+        if (ledgeDetected && !canClimbLedge)
+        {
+            canClimbLedge = true;
+
+            if (isFacingRight)
+            {
+                ledgePos1 = new Vector2(Mathf.Floor(ledgePosBot.x + wallCheckDistance) - ledgeClimbXOffset1, Mathf.Floor(ledgePosBot.y) + ledgeClimbYOffset1);
+                ledgePos2 = new Vector2(Mathf.Floor(ledgePosBot.x + wallCheckDistance) + ledgeClimbXOffset2, Mathf.Floor(ledgePosBot.y) + ledgeClimbYOffset2);
+            }
+            else
+            {
+                ledgePos1 = new Vector2(Mathf.Ceil(ledgePosBot.x - wallCheckDistance) + ledgeClimbXOffset1, Mathf.Floor(ledgePosBot.y) + ledgeClimbYOffset1);
+                ledgePos1 = new Vector2(Mathf.Ceil(ledgePosBot.x - wallCheckDistance) - ledgeClimbXOffset2, Mathf.Floor(ledgePosBot.y) + ledgeClimbYOffset2);
+            }
+
+            canMove = false;
+            canFlip = false;
+
+            if (canClimbLedge)
+            {
+                transform.position = ledgePos1;
+            }
+
+            anim.SetBool("canClimbLedge", canClimbLedge);
+        }
+    }
+
     private void CheckIfWallSliding()
     {
-        if (isTouchingWall && movementInputDirection == facingDirection && rb.velocity.y < 0)
+        if (isTouchingWall && movementInputDirection == facingDirection && rb.velocity.y < 0 && !canClimbLedge)
         {
             isWallSliding = true;
         }
@@ -105,11 +148,29 @@ public class PlayerController : MonoBehaviour
             canNormalJump = true;
     }
 
+    public void FinishLedgeClimb()
+    {
+        canClimbLedge = false;
+        transform.position = ledgePos2;
+        canMove = true;
+        canFlip = true;
+        ledgeDetected = false;
+        anim.SetBool("canClimbLedge", canClimbLedge);
+    }
+
     private void CheckSurroundings()
     {
         isGrounded = Physics2D.OverlapCircle(groundCheck.position, groundCheckRadious, whatIsGrounded);
 
         isTouchingWall = Physics2D.Raycast(wallCheck.position, transform.right, wallCheckDistance, whatIsGrounded);
+
+        isTouchingLedge = Physics2D.Raycast(ledgeCheck.position, transform.right, wallCheckDistance, whatIsGrounded);
+
+        if (isTouchingWall && !isTouchingLedge && !ledgeDetected)
+        {
+            ledgeDetected = true;
+            ledgePosBot = wallCheck.position;
+        }
     }
 
     private void CheckMovementDirection()
@@ -161,7 +222,7 @@ public class PlayerController : MonoBehaviour
             }
         }
 
-        if (!canMove)
+        if (turnTimer >= 0)
         {
             turnTimer -= Time.deltaTime;
 
