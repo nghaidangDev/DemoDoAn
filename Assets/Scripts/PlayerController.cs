@@ -311,6 +311,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    public void DisableFlip()
+    {
+        canFlip = false;
+    }
+
+    public void EnableFlip()
+    {
+        canFlip = true;
+    }
+
     private void CheckJump()
     {
         //Wall Jump
